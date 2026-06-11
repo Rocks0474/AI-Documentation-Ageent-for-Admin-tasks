@@ -16,7 +16,9 @@ venv/
 # Local dev artifacts
 local_storage/
 secrets.local.json
-.env.local
+# Note: .env.local IS tracked (a no-secret template); real secrets go in
+# secrets.local.json above. Per-developer overrides go in .env (ignored).
+.env
 
 # OS
 .DS_Store

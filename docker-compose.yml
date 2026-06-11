@@ -1,0 +1,22 @@
+# Local development — every adapter resolves to its LOCAL implementation.
+# `docker-compose up` boots the full stack with CLOUD_TARGET=LOCAL; no external
+# cloud infrastructure is required because the LOCAL adapters are in-process.
+services:
+  hr-agent-team:
+    build:
+      context: .
+      args:
+        INSTALL_EXTRAS: ""   # base deps only for LOCAL
+    image: ai-hr-agent-team:local
+    env_file:
+      - .env.local
+    environment:
+      CLOUD_TARGET: LOCAL
+      RUN_MODE: server
+      LOCAL_STORAGE_ROOT: /data/local_storage
+      LOCAL_SECRETS_FILE: /data/secrets.local.json
+    volumes:
+      - local_data:/data
+
+volumes:
+  local_data:
