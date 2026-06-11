@@ -102,14 +102,27 @@ def build_health_server(port: int = 8080) -> HTTPServer:
 
 async def main() -> None:
     await startup()
-    if os.environ.get("RUN_MODE", "server").lower() == "check":
+    run_mode = os.environ.get("RUN_MODE", "server").lower()
+    if run_mode == "check":
         logger.info("run_mode.check_complete")
         return
 
-    # Serve a health endpoint on $PORT (Cloud Run / ECS expect HTTP) and idle.
+    # Serve a health endpoint on $PORT (Cloud Run / ECS expect HTTP).
     port = int(os.environ.get("PORT", "8080"))
     server = build_health_server(port)
     threading.Thread(target=server.serve_forever, daemon=True).start()
+
+    if run_mode == "worker":
+        # Consume the ingress queue and drive the orchestration graph.
+        from orchestration.worker import build_default_worker
+
+        worker = build_default_worker(
+            topic=os.environ.get("WORKER_QUEUE_TOPIC", "routing")
+        )
+        logger.info("run_mode.worker_listening", port=port)
+        await worker.run_forever()
+        return
+
     logger.info("run_mode.server_listening", port=port)
     await asyncio.Event().wait()  # idle forever — keeps the container alive
 
