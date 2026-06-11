@@ -40,17 +40,22 @@ class ERAgent(BaseAgent):
         super().__init__(**kwargs)
         self.compliance = compliance or ERComplianceModule()
 
-    def _parse_payload(self, request: AgentRequest) -> ERCasePayload:
+    def parse_payload(self, request: AgentRequest) -> ERCasePayload:
         data = dict(request.payload or {})
         data.setdefault("jurisdiction_code", request.jurisdiction_code)
         if "case_summary" not in data:
             data["case_summary"] = data.get("facts") or data.get("intent") or ""
         return ERCasePayload(**data)
 
-    async def process(self, request: AgentRequest) -> AgentResponse:
-        payload = self._parse_payload(request)
+    async def run_module_b(
+        self, request: AgentRequest, payload: ERCasePayload
+    ) -> ComplianceResult:
+        """Module B — deterministic compliance gate, audited before Module A.
 
-        # --- Module B — deterministic, runs FIRST -----------------------
+        Exposed as a standalone step so the orchestration graph can model it as
+        a synchronous pre-node that must return CLEAR before Module A runs
+        (Constraint #4).
+        """
         result = self.compliance.check(
             facts=payload.case_summary,
             jurisdiction=payload.jurisdiction_code.value,
@@ -58,7 +63,6 @@ class ERAgent(BaseAgent):
             works_council_present=payload.works_council_present,
             union_present=payload.union_present,
         )
-
         # Audit the compliance verdict BEFORE Module A can run (Constraint #4).
         await self.audit_log.append(
             AuditEntry(
@@ -69,14 +73,21 @@ class ERAgent(BaseAgent):
                 detail=f"{result.result}: {','.join(result.triggered_rules)}",
             )
         )
+        return result
+
+    async def process(self, request: AgentRequest) -> AgentResponse:
+        payload = self.parse_payload(request)
+
+        # --- Module B — deterministic, runs FIRST -----------------------
+        result = await self.run_module_b(request, payload)
 
         if result.result == "HARD_STOP":
-            return self._hard_stop_response(request, result)
+            return self.hard_stop_response(request, result)
 
         # --- Module A — LLM reasoning (only on CLEAR) -------------------
-        return await self._reason(request, payload)
+        return await self.run_module_a(request, payload)
 
-    def _hard_stop_response(
+    def hard_stop_response(
         self, request: AgentRequest, result: ComplianceResult
     ) -> AgentResponse:
         flags = list(result.triggered_rules)
@@ -92,7 +103,7 @@ class ERAgent(BaseAgent):
             jurisdiction_flags=flags,
         )
 
-    async def _reason(
+    async def run_module_a(
         self, request: AgentRequest, payload: ERCasePayload
     ) -> AgentResponse:
         system = self._build_system_prompt(
