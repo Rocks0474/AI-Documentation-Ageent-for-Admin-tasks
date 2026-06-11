@@ -16,6 +16,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import structlog
 
@@ -78,12 +80,37 @@ async def startup() -> None:
     logger.info("startup.ready", cloud_target=target)
 
 
+class _HealthHandler(BaseHTTPRequestHandler):
+    """Minimal health endpoint so the container passes Cloud Run / ECS checks."""
+
+    def do_GET(self) -> None:  # noqa: N802 - http.server API
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"ok")
+
+    def log_message(self, *args) -> None:  # silence default stderr logging
+        return
+
+
+def build_health_server(port: int = 8080) -> HTTPServer:
+    """Build (but do not start) the health HTTP server bound to ``port``."""
+    # Binding all interfaces is required so the platform health check can reach
+    # the container (Cloud Run / ECS route to the task IP).
+    return HTTPServer(("0.0.0.0", port), _HealthHandler)  # noqa: S104
+
+
 async def main() -> None:
     await startup()
     if os.environ.get("RUN_MODE", "server").lower() == "check":
         logger.info("run_mode.check_complete")
         return
-    logger.info("run_mode.server_idle")
+
+    # Serve a health endpoint on $PORT (Cloud Run / ECS expect HTTP) and idle.
+    port = int(os.environ.get("PORT", "8080"))
+    server = build_health_server(port)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    logger.info("run_mode.server_listening", port=port)
     await asyncio.Event().wait()  # idle forever — keeps the container alive
 
 
