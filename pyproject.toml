@@ -1,0 +1,87 @@
+[tool.poetry]
+name = "ai-hr-agent-team"
+version = "0.1.0"
+description = "AI Global HR Agent Team — nine-agent orchestration system for global HR functions"
+authors = ["AI HR Agent Team"]
+readme = "README.md"
+packages = [
+    { include = "agents" },
+    { include = "adapters" },
+    { include = "schemas" },
+    { include = "pii_gateway" },
+    { include = "orchestration" },
+    { include = "config" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+anthropic = "^0.40.0"
+langgraph = "^0.2.0"
+pydantic = "^2.0"
+pydantic-settings = "^2.0"
+
+# Cloud SDKs — Layer 3 only, never imported in agents/
+google-cloud-storage = { version = "*", optional = true }
+google-cloud-pubsub = { version = "*", optional = true }
+google-cloud-secret-manager = { version = "*", optional = true }
+google-cloud-scheduler = { version = "*", optional = true }
+google-cloud-aiplatform = { version = "*", optional = true }
+boto3 = { version = "*", optional = true }
+opensearch-py = { version = "*", optional = true }
+
+# Always installed
+httpx = "^0.27"
+structlog = "^24.0"      # Structured logging for audit trail
+tenacity = "^9.0"        # Retry logic for adapter calls
+
+[tool.poetry.extras]
+gcp = [
+    "google-cloud-storage",
+    "google-cloud-pubsub",
+    "google-cloud-secret-manager",
+    "google-cloud-scheduler",
+    "google-cloud-aiplatform",
+]
+aws = ["boto3", "opensearch-py"]
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.0"
+pytest-asyncio = "^0.23"
+mypy = "^1.0"
+ruff = "^0.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# -----------------------------------------------------------------------------
+# Tooling configuration
+# -----------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["local_storage"]
+
+[tool.ruff.lint]
+# Correctness/security profile. `UP` (pyupgrade) is intentionally NOT selected:
+# the architecture spec establishes a house style using `Optional[...]` and
+# `(str, Enum)` that later phases copy from, and we keep the codebase
+# internally consistent with it.
+select = ["E", "F", "I", "B", "S"]
+# S307 (eval) is deliberately allowed only inside the ER compliance module,
+# where it is suppressed inline with a `# noqa: S307` and a controlled ruleset.
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # asserts are expected in tests
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true

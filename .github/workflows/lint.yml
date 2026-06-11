@@ -1,0 +1,33 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Architectural Constraint #1 — agents/ must not import any cloud-provider
+  # SDK. This is the gate that keeps Layer 1 cloud-agnostic. It runs on stdlib
+  # only, so it does not require installing project dependencies.
+  check-layer-1-purity:
+    name: check-layer-1-purity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Enforce Layer 1 purity (no cloud SDK imports under agents/)
+        run: python scripts/check_layer_1_purity.py
+
+  ruff:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        run: pip install "ruff>=0.4,<0.5"
+      - name: Lint
+        run: ruff check .
