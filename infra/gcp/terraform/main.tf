@@ -290,6 +290,10 @@ resource "google_cloud_run_v2_service" "app" {
         value = "GCP"
       }
       env {
+        name  = "RUN_MODE"
+        value = "api" # serve the ingestion + approval API (worker runs in-process)
+      }
+      env {
         name  = "GCP_PROJECT_ID"
         value = var.project_id
       }

@@ -123,6 +123,19 @@ async def main() -> None:
         await worker.run_forever()
         return
 
+    if run_mode == "api":
+        # Serve the ingestion + approval API (runs the worker in-process by
+        # default; set API_RUN_WORKER=false to run workers separately).
+        import uvicorn
+
+        from service.api import create_app
+
+        server.shutdown()  # uvicorn binds $PORT itself
+        config = uvicorn.Config(create_app(), host="0.0.0.0", port=port, log_level="info")  # noqa: S104
+        logger.info("run_mode.api_listening", port=port)
+        await uvicorn.Server(config).serve()
+        return
+
     logger.info("run_mode.server_listening", port=port)
     await asyncio.Event().wait()  # idle forever — keeps the container alive
 

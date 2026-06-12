@@ -436,6 +436,7 @@ resource "aws_ecs_task_definition" "app" {
     essential = true
     environment = [
       { name = "CLOUD_TARGET", value = "AWS" },
+      { name = "RUN_MODE", value = "api" },
       { name = "AWS_REGION", value = var.aws_region },
       { name = "AWS_ACCOUNT_ID", value = local.account_id },
       { name = "LOG_LEVEL", value = "INFO" },

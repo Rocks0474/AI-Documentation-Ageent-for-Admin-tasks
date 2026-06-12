@@ -240,6 +240,46 @@ service / ECS task definition — you do not set them by hand.
 
 ---
 
+## 3.5 Runtime modes & the API
+
+The container entrypoint (`python main.py`) selects behaviour from `RUN_MODE`:
+
+| `RUN_MODE` | Behaviour |
+|---|---|
+| `api` (deployed default) | Serves the FastAPI ingestion + approval API on `$PORT`, and runs the queue worker in-process (`API_RUN_WORKER=true`). |
+| `worker` | Runs only the queue worker (no HTTP API beyond health). Use to scale workers separately. |
+| `server` | Health endpoint + idle (no work consumed). |
+| `check` | Startup self-check, then exit 0 (smoke test / CI). |
+
+**API endpoints**
+- `POST /requests` — submit an `AgentRequest`; PII-gated, then published to the
+  ingress queue. `202 {request_id, status}`.
+- `GET /requests/{id}` — `QUEUED` / `PROCESSING` / `PENDING_APPROVAL` /
+  `COMPLETED` plus the audit trail.
+- `POST /requests/{id}/approve` — `{ "approver_id": "..." }` resumes a
+  HITL-suspended run (`404` unknown, `409` not awaiting approval).
+- `GET /healthz`.
+
+**Durable HITL checkpointer (important for scale-out).** By default the graph
+uses an in-process `MemorySaver`, so the API and worker must run in **one
+process** (the deployed default) and suspended HITL runs are lost on restart.
+To run the API and workers as **separate** services — or to survive restarts —
+set a Postgres DSN and install the `postgres` extra:
+
+```bash
+CHECKPOINTER_DB_URL=postgresql://user:pass@host:5432/hr_agents   # or DATABASE_URL
+# build image with: --build-arg INSTALL_EXTRAS="[gcp,aws,postgres]"
+```
+
+With a Postgres checkpointer set, `RUN_MODE=api` (with `API_RUN_WORKER=false`)
+and one or more `RUN_MODE=worker` containers share suspended state durably.
+
+Relevant env vars: `RUN_MODE`, `API_RUN_WORKER` (default `true`),
+`WORKER_QUEUE_TOPIC` (default `routing`), `CHECKPOINTER_DB_URL` / `DATABASE_URL`,
+`PORT`.
+
+---
+
 ## 4. Order of operations (summary)
 
 1. Build the single image (`[gcp,aws]` extras).
