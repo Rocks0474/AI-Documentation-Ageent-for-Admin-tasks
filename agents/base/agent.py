@@ -48,7 +48,9 @@ class BaseAgent(ABC):
     """
 
     agent_id: str = "BASE_AGENT"  # overridden by subclass: "ER_AGENT", etc.
-    model: str = "claude-sonnet-4-20250514"
+    # Sonnet-tier (cost-conscious for high request volume). Migrated from the
+    # spec's claude-sonnet-4-20250514, which retires 2026-06-15.
+    model: str = "claude-sonnet-4-6"
     SYSTEM_PROMPT_TEMPLATE: str = ""
 
     def __init__(
@@ -152,7 +154,8 @@ class BaseAgent(ABC):
             system=system,
             messages=messages,
         )
-        return response.content[0].text
+        # Return the first text block (responses may lead with other block types).
+        return next((b.text for b in response.content if b.type == "text"), "")
 
     async def _log_pii_violation(
         self, request: AgentRequest, pii_result: Any
