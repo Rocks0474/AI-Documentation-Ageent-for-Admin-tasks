@@ -1,0 +1,121 @@
+{
+  "app_name": "External Contractor Account Requests",
+  "description": "Tracks the full lifecycle of system account requests for external advisors, engineering outsourcers, and other contractors.",
+  "fields": {
+    "request_id":    { "type": "RECORD_NUMBER", "label": "Request ID" },
+    "status": {
+      "type": "DROP_DOWN", "label": "Status", "required": true,
+      "defaultValue": "PENDING_APPROVAL",
+      "options": {
+        "PENDING_APPROVAL":  { "label": "Pending Approval",   "index": 0 },
+        "APPROVED":          { "label": "Approved",           "index": 1 },
+        "PENDING_SIGNATURE": { "label": "Pending Signature",  "index": 2 },
+        "SIGNED":            { "label": "Agreement Signed",   "index": 3 },
+        "PROVISIONING":      { "label": "Provisioning",       "index": 4 },
+        "ACTIVE":            { "label": "Active",             "index": 5 },
+        "SUSPENDED":         { "label": "Suspended",          "index": 6 },
+        "OFFBOARDED":        { "label": "Offboarded",         "index": 7 },
+        "REJECTED":          { "label": "Rejected",           "index": 8 }
+      }
+    },
+    "contractor_type": {
+      "type": "DROP_DOWN", "label": "Contractor Type", "required": true,
+      "options": {
+        "EXTERNAL_ADVISOR":       { "label": "External Advisor",       "index": 0 },
+        "ENGINEERING_OUTSOURCER": { "label": "Engineering Outsourcer", "index": 1 },
+        "BUSINESS_OUTSOURCER":    { "label": "Business Outsourcer",    "index": 2 },
+        "VENDOR":                 { "label": "Vendor",                 "index": 3 },
+        "TEMP_STAFF":             { "label": "Temporary Staff",        "index": 4 }
+      }
+    },
+    "contractor_full_name":  { "type": "SINGLE_LINE_TEXT", "label": "Contractor Full Name",              "required": true },
+    "contractor_name_kana":  { "type": "SINGLE_LINE_TEXT", "label": "Contractor Name (Kana / フリガナ)", "required": false },
+    "contractor_email":      { "type": "SINGLE_LINE_TEXT", "label": "Contractor Personal Email",          "required": true },
+    "contractor_company":    { "type": "SINGLE_LINE_TEXT", "label": "Contractor Company / Organization",  "required": false },
+    "internal_sponsor":      { "type": "USER_SELECT",      "label": "Internal Sponsor",                   "required": true },
+    "department": {
+      "type": "DROP_DOWN", "label": "Department", "required": true,
+      "options": {
+        "ENGINEERING": { "label": "Engineering", "index": 0 }, "PRODUCT":    { "label": "Product",    "index": 1 },
+        "SALES":       { "label": "Sales",       "index": 2 }, "MARKETING":  { "label": "Marketing",  "index": 3 },
+        "FINANCE":     { "label": "Finance",     "index": 4 }, "HR":         { "label": "HR",         "index": 5 },
+        "LEGAL":       { "label": "Legal",       "index": 6 }, "OPERATIONS": { "label": "Operations", "index": 7 }
+      }
+    },
+    "project_name":          { "type": "SINGLE_LINE_TEXT", "label": "Project / Engagement Name", "required": true },
+    "purpose":               { "type": "MULTI_LINE_TEXT",  "label": "Purpose / Business Justification", "required": true },
+    "engagement_start_date": { "type": "DATE",             "label": "Engagement Start Date",    "required": true },
+    "engagement_end_date":   { "type": "DATE",             "label": "Engagement End Date",      "required": true },
+    "auto_offboard": {
+      "type": "CHECK_BOX", "label": "Auto-offboard on end date",
+      "options": { "YES": { "label": "Yes — automatically revoke access on end date", "index": 0 } },
+      "defaultValue": ["YES"]
+    },
+    "systems_requested": {
+      "type": "CHECK_BOX", "label": "Systems / Accounts Requested", "required": true,
+      "options": {
+        "GOOGLE_WORKSPACE_EMAIL": { "label": "Google Workspace Email",   "index": 0 },
+        "GCP_PROJECT_ACCESS":     { "label": "GCP Project Access",        "index": 1 },
+        "SLACK":                  { "label": "Slack",                     "index": 2 },
+        "KINTONE":                { "label": "Kintone",                   "index": 3 },
+        "GITHUB":                 { "label": "GitHub",                    "index": 4 },
+        "JIRA":                   { "label": "Jira",                      "index": 5 },
+        "CONFLUENCE":             { "label": "Confluence",                "index": 6 },
+        "VPN":                    { "label": "VPN Access",                "index": 7 },
+        "OTHER":                  { "label": "Other (specify in notes)",  "index": 8 }
+      }
+    },
+    "gcp_projects":           { "type": "SINGLE_LINE_TEXT", "label": "GCP Project IDs (comma-separated)" },
+    "gcp_role": {
+      "type": "DROP_DOWN", "label": "GCP IAM Role",
+      "options": {
+        "VIEWER":  { "label": "Viewer (read-only)", "index": 0 }, "EDITOR":  { "label": "Editor",          "index": 1 },
+        "DEVELOPER": { "label": "Developer (custom)", "index": 2 }, "CUSTOM": { "label": "Custom Role", "index": 3 }
+      }
+    },
+    "slack_channels":         { "type": "SINGLE_LINE_TEXT", "label": "Slack Channels (comma-separated)" },
+    "kintone_apps":           { "type": "SINGLE_LINE_TEXT", "label": "Kintone Apps / Spaces" },
+    "github_teams":           { "type": "SINGLE_LINE_TEXT", "label": "GitHub Teams / Repos" },
+    "agreement_type": {
+      "type": "DROP_DOWN", "label": "Agreement Required", "required": true, "defaultValue": "NDA",
+      "options": {
+        "NDA":              { "label": "NDA Only",                     "index": 0 },
+        "NDA_AND_CONTRACT": { "label": "NDA + Contractor Agreement",   "index": 1 },
+        "EXISTING":         { "label": "Existing Agreement on File",   "index": 2 },
+        "NONE":             { "label": "None Required",                "index": 3 }
+      }
+    },
+    "docusign_envelope_id":   { "type": "SINGLE_LINE_TEXT", "label": "DocuSign Envelope ID" },
+    "docusign_status": {
+      "type": "DROP_DOWN", "label": "DocuSign Status", "defaultValue": "NOT_SENT",
+      "options": {
+        "NOT_SENT":  { "label": "Not Sent",  "index": 0 }, "SENT":     { "label": "Sent",     "index": 1 },
+        "DELIVERED": { "label": "Delivered", "index": 2 }, "SIGNED":   { "label": "Signed",   "index": 3 },
+        "DECLINED":  { "label": "Declined",  "index": 4 }, "VOIDED":   { "label": "Voided",   "index": 5 },
+        "NA":        { "label": "N/A",       "index": 6 }
+      }
+    },
+    "docusign_signed_at":     { "type": "DATETIME",         "label": "Agreement Signed At" },
+    "provisioned_email":      { "type": "SINGLE_LINE_TEXT", "label": "Provisioned Email Address" },
+    "provisioned_systems":    { "type": "MULTI_LINE_TEXT",  "label": "Provisioning Log" },
+    "approver":               { "type": "USER_SELECT",      "label": "Approver" },
+    "approved_at":            { "type": "DATETIME",         "label": "Approved At" },
+    "rejection_reason":       { "type": "MULTI_LINE_TEXT",  "label": "Rejection / Suspension Reason" },
+    "slack_thread_ts":        { "type": "SINGLE_LINE_TEXT", "label": "Slack Thread Timestamp" },
+    "slack_channel_id":       { "type": "SINGLE_LINE_TEXT", "label": "Slack Channel ID" },
+    "notes":                  { "type": "MULTI_LINE_TEXT",  "label": "Notes / Additional Info" },
+    "created_at":             { "type": "CREATED_TIME",     "label": "Request Created At" },
+    "updated_at":             { "type": "UPDATED_TIME",     "label": "Last Updated At" },
+    "created_by":             { "type": "CREATOR",          "label": "Submitted By" }
+  },
+  "views": {
+    "active_requests":   { "type": "LIST", "name": "Active Requests",          "filterCond": "status not in (\"OFFBOARDED\", \"REJECTED\")",   "sort": "created_at desc" },
+    "pending_approval":  { "type": "LIST", "name": "Pending Approval",         "filterCond": "status = \"PENDING_APPROVAL\"",                 "sort": "created_at asc" },
+    "pending_signature": { "type": "LIST", "name": "Pending Signature",        "filterCond": "status = \"PENDING_SIGNATURE\"",               "sort": "created_at asc" },
+    "expiring_soon":     { "type": "LIST", "name": "Expiring Within 30 Days",  "filterCond": "engagement_end_date <= TODAY()+30 and status = \"ACTIVE\"", "sort": "engagement_end_date asc" }
+  },
+  "notifications": {
+    "on_status_change": ["internal_sponsor", "approver"],
+    "expiry_reminder_days": [30, 14, 7, 1]
+  }
+}

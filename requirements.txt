@@ -1,0 +1,19 @@
+anthropic>=0.40.0
+slack-bolt>=1.18.0
+slack-sdk>=3.27.0
+python-dotenv>=1.0.0
+
+# Phase 2 — DocuSign
+docusign-esign>=3.25.0
+
+# Phase 3 — Google Workspace + GCP
+google-api-python-client>=2.120.0
+google-auth>=2.28.0
+google-auth-httplib2>=0.2.0
+
+# Phase 4+ — GitHub
+PyGithub>=2.2.0
+
+# Web server (for DocuSign webhooks)
+fastapi>=0.110.0
+uvicorn>=0.28.0
