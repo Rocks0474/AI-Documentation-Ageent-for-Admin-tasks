@@ -86,7 +86,8 @@ select = ["E", "F", "I", "B", "S"]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]  # asserts are expected in tests
+# S101: asserts expected in tests. S310: tests open localhost http:// URLs.
+"tests/**" = ["S101", "S310"]
 # These are secret *reference names* (looked up in the SecretsAdapter), not
 # secret values — S105 (hardcoded password) is a false positive here.
 "config/settings.py" = ["S105"]
@@ -95,6 +96,9 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
 asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+# Put the repo root on sys.path so `pytest` (bare console script, as CI runs it)
+# can import the top-level packages — not just `python -m pytest`.
+pythonpath = ["."]
 
 [tool.mypy]
 python_version = "3.11"
