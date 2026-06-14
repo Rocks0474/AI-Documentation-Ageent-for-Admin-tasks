@@ -51,14 +51,22 @@ variable "hris_api_base_url" {
   default = ""
 }
 
+variable "enable_vertex" {
+  type        = bool
+  description = "Provision Vertex AI Vector Search + Cloud Run VPC egress. Set false to stage the rest of the stack first (no VPC/peering required); the app runs with a disabled vector backend."
+  default     = true
+}
+
 variable "vertex_network" {
   type        = string
-  description = "Full VPC network resource path for the PRIVATE Vertex AI index endpoint and Cloud Run egress, e.g. projects/PROJECT_NUMBER/global/networks/NETWORK."
+  description = "Full VPC network resource path for the PRIVATE Vertex AI index endpoint and Cloud Run egress, e.g. projects/PROJECT_NUMBER/global/networks/NETWORK. Required only when enable_vertex = true."
+  default     = ""
 }
 
 variable "vertex_subnetwork" {
   type        = string
-  description = "Subnetwork self-link for Cloud Run direct VPC egress (must be in var.region)."
+  description = "Subnetwork self-link for Cloud Run direct VPC egress (must be in var.region). Required only when enable_vertex = true."
+  default     = ""
 }
 
 variable "vertex_index_dimensions" {

@@ -196,6 +196,7 @@ resource "google_project_iam_member" "sa_scheduler_admin" {
 # Vertex AI Vector Search — Zone 2 and Zone 3 indexes on a PRIVATE endpoint.
 # ---------------------------------------------------------------------------
 resource "google_vertex_ai_index" "zone2" {
+  count               = var.enable_vertex ? 1 : 0
   region              = var.region
   display_name        = "${var.service_name}-zone2"
   index_update_method = "STREAM_UPDATE"
@@ -216,6 +217,7 @@ resource "google_vertex_ai_index" "zone2" {
 }
 
 resource "google_vertex_ai_index" "zone3" {
+  count               = var.enable_vertex ? 1 : 0
   region              = var.region
   display_name        = "${var.service_name}-zone3"
   index_update_method = "STREAM_UPDATE"
@@ -236,6 +238,7 @@ resource "google_vertex_ai_index" "zone3" {
 }
 
 resource "google_vertex_ai_index_endpoint" "private" {
+  count        = var.enable_vertex ? 1 : 0
   display_name = "${var.service_name}-endpoint"
   region       = var.region
   network      = var.vertex_network # private endpoint (VPC-peered)
@@ -243,8 +246,9 @@ resource "google_vertex_ai_index_endpoint" "private" {
 }
 
 resource "google_vertex_ai_index_endpoint_deployed_index" "zone2" {
-  index_endpoint    = google_vertex_ai_index_endpoint.private.id
-  index             = google_vertex_ai_index.zone2.id
+  count             = var.enable_vertex ? 1 : 0
+  index_endpoint    = google_vertex_ai_index_endpoint.private[0].id
+  index             = google_vertex_ai_index.zone2[0].id
   deployed_index_id = "zone2"
   automatic_resources {
     min_replica_count = 1
@@ -253,8 +257,9 @@ resource "google_vertex_ai_index_endpoint_deployed_index" "zone2" {
 }
 
 resource "google_vertex_ai_index_endpoint_deployed_index" "zone3" {
-  index_endpoint    = google_vertex_ai_index_endpoint.private.id
-  index             = google_vertex_ai_index.zone3.id
+  count             = var.enable_vertex ? 1 : 0
+  index_endpoint    = google_vertex_ai_index_endpoint.private[0].id
+  index             = google_vertex_ai_index.zone3[0].id
   deployed_index_id = "zone3"
   automatic_resources {
     min_replica_count = 1
@@ -274,12 +279,17 @@ resource "google_cloud_run_v2_service" "app" {
     service_account = google_service_account.run_sa.email
     scaling { min_instance_count = 1 }
 
-    vpc_access {
-      network_interfaces {
-        network    = var.vertex_network
-        subnetwork = var.vertex_subnetwork
+    # Direct VPC egress to reach the private Vertex endpoint. Omitted when
+    # Vertex is disabled (staging) — public Google/Anthropic APIs egress directly.
+    dynamic "vpc_access" {
+      for_each = var.enable_vertex ? [1] : []
+      content {
+        network_interfaces {
+          network    = var.vertex_network
+          subnetwork = var.vertex_subnetwork
+        }
+        egress = "PRIVATE_RANGES_ONLY"
       }
-      egress = "PRIVATE_RANGES_ONLY"
     }
 
     containers {
@@ -350,16 +360,20 @@ resource "google_cloud_run_v2_service" "app" {
         value = google_pubsub_topic.notifications.name
       }
       env {
+        name  = "VERTEX_VECTOR_SEARCH_ENABLED"
+        value = var.enable_vertex ? "true" : "false"
+      }
+      env {
         name  = "VERTEX_INDEX_ID_ZONE2"
-        value = google_vertex_ai_index.zone2.id
+        value = var.enable_vertex ? google_vertex_ai_index.zone2[0].id : ""
       }
       env {
         name  = "VERTEX_INDEX_ID_ZONE3"
-        value = google_vertex_ai_index.zone3.id
+        value = var.enable_vertex ? google_vertex_ai_index.zone3[0].id : ""
       }
       env {
         name  = "VERTEX_INDEX_ENDPOINT_ID"
-        value = google_vertex_ai_index_endpoint.private.id
+        value = var.enable_vertex ? google_vertex_ai_index_endpoint.private[0].id : ""
       }
       env {
         name = "ANTHROPIC_API_KEY"

@@ -120,7 +120,36 @@ def _default_embedder() -> Embedder:
     return _VertexEmbedder()
 
 
-def get_adapter() -> GCPVectorDBAdapter:
+class NoopVectorDBAdapter(VectorDBAdapter):
+    """Disabled vector backend (staging without Vertex AI Vector Search).
+
+    Selected when ``VERTEX_VECTOR_SEARCH_ENABLED=false`` so the app starts
+    without a live Vertex endpoint. Queries return no results; it imports no
+    cloud SDK and reads no Vertex env vars. Re-enable by provisioning Vertex and
+    setting the flag back to true.
+    """
+
+    async def upsert(self, index: str, documents: list[VectorDocument]) -> int:
+        return 0
+
+    async def query(
+        self,
+        index: str,
+        query_text: str,
+        top_k: int = 5,
+        *,
+        filter: Optional[dict] = None,
+    ) -> list[VectorQueryResult]:
+        return []
+
+    async def delete(self, index: str, ids: list[str]) -> None:
+        return None
+
+
+def get_adapter() -> VectorDBAdapter:
+    if os.environ.get("VERTEX_VECTOR_SEARCH_ENABLED", "true").lower() == "false":
+        return NoopVectorDBAdapter()
+
     from google.cloud import aiplatform  # lazy import
 
     aiplatform.init(

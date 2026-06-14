@@ -396,6 +396,19 @@ async def test_gcp_vector_unknown_index_raises():
         await adapter.query("zoneX", "q")
 
 
+async def test_gcp_vector_disabled_returns_noop(monkeypatch):
+    # Staging without Vertex: get_adapter() must return a no-op WITHOUT importing
+    # the GCP SDK or reading any VERTEX_* env var, so the app starts cleanly.
+    from adapters.gcp.vector_db import NoopVectorDBAdapter, get_adapter
+
+    monkeypatch.setenv("VERTEX_VECTOR_SEARCH_ENABLED", "false")
+    adapter = get_adapter()
+    assert isinstance(adapter, NoopVectorDBAdapter)
+    assert await adapter.query("zone2", "anything") == []
+    assert await adapter.upsert("zone2", [VectorDocument(id="d", content="x")]) == 0
+    await adapter.delete("zone2", ["d"])  # no error
+
+
 # ---------------------------------------------------------------------------
 # Factory dispatch (Constraint #6) — routes to the GCP package without the SDK
 # ---------------------------------------------------------------------------

@@ -71,6 +71,26 @@ vertex_network    = "projects/PROJECT_NUMBER/global/networks/your-vpc"
 vertex_subnetwork = "https://www.googleapis.com/compute/v1/projects/your-project/regions/asia-northeast1/subnetworks/your-subnet"
 ```
 
+#### Staging without Vertex (no VPC required)
+
+To bring up Cloud Run + GCS + Pub/Sub + Secrets + Scheduler first — skipping the
+slow/costly Vertex private endpoint and its VPC peering — set `enable_vertex`
+and omit the network vars:
+
+```hcl
+project_id    = "global-ai-agent-hr-team"
+region        = "asia-northeast1"
+image         = "asia-northeast1-docker.pkg.dev/global-ai-agent-hr-team/hr/ai-hr-agent-team:<sha>"
+bucket_prefix = "global-ai-agent-hr-team-hr"   # must be globally unique
+enable_vertex = false
+```
+
+With `enable_vertex = false` the module skips the Vertex index/endpoint and the
+Cloud Run VPC egress, and the service runs with `VERTEX_VECTOR_SEARCH_ENABLED=false`
+(a no-op vector backend — agent flows that don't use vector search are
+unaffected). To add Vertex later: create the VPC + Service Networking peering,
+set `enable_vertex = true` with `vertex_network`/`vertex_subnetwork`, and re-apply.
+
 ### 1.4 Apply (order of operations)
 
 ```bash

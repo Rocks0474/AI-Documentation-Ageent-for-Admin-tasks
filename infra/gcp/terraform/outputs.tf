@@ -37,15 +37,15 @@ output "topic_notifications" {
 }
 
 output "vertex_index_id_zone2" {
-  value = google_vertex_ai_index.zone2.id
+  value = one(google_vertex_ai_index.zone2[*].id)
 }
 
 output "vertex_index_id_zone3" {
-  value = google_vertex_ai_index.zone3.id
+  value = one(google_vertex_ai_index.zone3[*].id)
 }
 
 output "vertex_index_endpoint_id" {
-  value = google_vertex_ai_index_endpoint.private.id
+  value = one(google_vertex_ai_index_endpoint.private[*].id)
 }
 
 output "statutory_job_names" {
