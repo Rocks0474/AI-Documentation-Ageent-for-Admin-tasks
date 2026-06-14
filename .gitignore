@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local dev artifacts
+local_storage/
+secrets.local.json
+# Note: .env.local IS tracked (a no-secret template); real secrets go in
+# secrets.local.json above. Per-developer overrides go in .env (ignored).
+.env
+
+# OS
+.DS_Store
