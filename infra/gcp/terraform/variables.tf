@@ -53,8 +53,8 @@ variable "hris_api_base_url" {
 
 variable "enable_vertex" {
   type        = bool
-  description = "Provision Vertex AI Vector Search + Cloud Run VPC egress. Set false to stage the rest of the stack first (no VPC/peering required); the app runs with a disabled vector backend."
-  default     = true
+  description = "Provision Vertex AI Vector Search + Cloud Run VPC egress. Defaults to DISABLED so the core stack deploys with no VPC/peering (the app runs a no-op vector backend). For production set true and supply vertex_network/vertex_subnetwork."
+  default     = false
 }
 
 variable "vertex_network" {

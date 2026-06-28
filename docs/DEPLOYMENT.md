@@ -62,34 +62,32 @@ docker push "$IMG"
 
 ### 1.3 Terraform variables (`infra/gcp/terraform/terraform.tfvars`)
 
-```hcl
-project_id        = "your-project"
-region            = "asia-northeast1"
-image             = "asia-northeast1-docker.pkg.dev/your-project/hr/ai-hr-agent-team:abc1234"
-bucket_prefix     = "acme-hr"            # buckets become acme-hr-zone2/-zone3/-audit
-vertex_network    = "projects/PROJECT_NUMBER/global/networks/your-vpc"
-vertex_subnetwork = "https://www.googleapis.com/compute/v1/projects/your-project/regions/asia-northeast1/subnetworks/your-subnet"
-```
-
-#### Staging without Vertex (no VPC required)
-
-To bring up Cloud Run + GCS + Pub/Sub + Secrets + Scheduler first — skipping the
-slow/costly Vertex private endpoint and its VPC peering — set `enable_vertex`
-and omit the network vars:
+`enable_vertex` **defaults to `false`** — the core stack (Cloud Run + GCS +
+Pub/Sub + Secrets + Scheduler) deploys with no VPC/peering. This is the staged
+first deploy:
 
 ```hcl
 project_id    = "global-ai-agent-hr-team"
 region        = "asia-northeast1"
 image         = "asia-northeast1-docker.pkg.dev/global-ai-agent-hr-team/hr/ai-hr-agent-team:<sha>"
 bucket_prefix = "global-ai-agent-hr-team-hr"   # must be globally unique
-enable_vertex = false
+# enable_vertex defaults to false — no VPC/Vertex provisioned.
 ```
 
-With `enable_vertex = false` the module skips the Vertex index/endpoint and the
-Cloud Run VPC egress, and the service runs with `VERTEX_VECTOR_SEARCH_ENABLED=false`
-(a no-op vector backend — agent flows that don't use vector search are
-unaffected). To add Vertex later: create the VPC + Service Networking peering,
-set `enable_vertex = true` with `vertex_network`/`vertex_subnetwork`, and re-apply.
+With Vertex disabled the module skips the Vertex index/endpoint and Cloud Run
+VPC egress, and the service runs with `VERTEX_VECTOR_SEARCH_ENABLED=false` (a
+no-op vector backend — agent flows that don't use vector search are unaffected).
+
+#### Enabling Vertex later (production)
+
+Create a VPC + subnet + Service Networking peering, then add to `tfvars` and
+re-apply:
+
+```hcl
+enable_vertex     = true
+vertex_network    = "projects/PROJECT_NUMBER/global/networks/your-vpc"
+vertex_subnetwork = "https://www.googleapis.com/compute/v1/projects/global-ai-agent-hr-team/regions/asia-northeast1/subnetworks/your-subnet"
+```
 
 ### 1.4 Apply (order of operations)
 
