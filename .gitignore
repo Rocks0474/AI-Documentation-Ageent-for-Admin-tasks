@@ -20,5 +20,14 @@ secrets.local.json
 # secrets.local.json above. Per-developer overrides go in .env (ignored).
 .env
 
+# Terraform — never commit state, plans, or per-env var files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+tfplan
+crash.log
+
 # OS
 .DS_Store

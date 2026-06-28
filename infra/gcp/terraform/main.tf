@@ -365,15 +365,15 @@ resource "google_cloud_run_v2_service" "app" {
       }
       env {
         name  = "VERTEX_INDEX_ID_ZONE2"
-        value = var.enable_vertex ? google_vertex_ai_index.zone2[0].id : ""
+        value = try(google_vertex_ai_index.zone2[0].id, "")
       }
       env {
         name  = "VERTEX_INDEX_ID_ZONE3"
-        value = var.enable_vertex ? google_vertex_ai_index.zone3[0].id : ""
+        value = try(google_vertex_ai_index.zone3[0].id, "")
       }
       env {
         name  = "VERTEX_INDEX_ENDPOINT_ID"
-        value = var.enable_vertex ? google_vertex_ai_index_endpoint.private[0].id : ""
+        value = try(google_vertex_ai_index_endpoint.private[0].id, "")
       }
       env {
         name = "ANTHROPIC_API_KEY"
