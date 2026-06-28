@@ -1,0 +1,30 @@
+# Build + push the single image via Cloud Build (no local Docker needed).
+#
+# `gcloud builds submit --tag` cannot pass Docker build args, so this config
+# runs an explicit `docker build --build-arg INSTALL_EXTRAS=...` step. Override
+# the two substitutions at submit time:
+#
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_IMAGE=REGION-docker.pkg.dev/PROJECT/hr/ai-hr-agent-team:TAG,_INSTALL_EXTRAS=[gcp] \
+#     --project PROJECT .
+#
+substitutions:
+  _IMAGE: ""              # REQUIRED — full Artifact Registry image path:tag
+  _INSTALL_EXTRAS: "[gcp]" # [gcp] | [aws] | [gcp,aws]
+
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "--build-arg"
+      - "INSTALL_EXTRAS=${_INSTALL_EXTRAS}"
+      - "-t"
+      - "${_IMAGE}"
+      - "."
+
+images:
+  - "${_IMAGE}"
+
+timeout: 1200s
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -18,6 +18,8 @@ COPY schemas ./schemas
 COPY pii_gateway ./pii_gateway
 COPY orchestration ./orchestration
 COPY config ./config
+COPY integrations ./integrations
+COPY service ./service
 COPY scripts ./scripts
 COPY main.py ./
 

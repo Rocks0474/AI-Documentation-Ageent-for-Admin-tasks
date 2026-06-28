@@ -1,0 +1,17 @@
+# Source upload filter for `gcloud builds submit`. Keep everything the
+# Dockerfile COPYs; drop VCS, caches, infra, docs, and tests.
+.git
+.github
+**/__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+venv
+*.egg-info
+local_storage
+secrets.local.json
+infra
+docs
+tests
